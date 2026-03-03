@@ -5,20 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Propose for You</title>
     <style>
-        /* 화면 전체를 고정하고 스크롤을 막습니다 */
+        /* 화면 전체 고정 및 스크롤 완전 차단 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; 
+            overflow: hidden;
             background-color: #f7cbd5;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-            position: fixed; /* 화면이 흔들리지 않게 고정 */
+            position: fixed; 
+            touch-action: none; /* 모바일에서 화면 밀림 방지 */
         }
 
         h1 {
@@ -27,14 +28,14 @@
             margin-bottom: 50px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             pointer-events: none;
-            z-index: 10;
+            text-align: center;
         }
 
         .btn-container {
             position: relative;
             display: flex;
-            gap: 30px;
-            z-index: 20;
+            gap: 20px;
+            z-index: 10;
         }
 
         button {
@@ -46,19 +47,19 @@
             background-color: #fff9f9;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-weight: bold;
-            /* 터치 시 파란 박스 생기는 것 방지 */
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* 아니오 버튼: 도망가는 애니메이션 */
         #no-btn {
-            /* 도망가는 움직임을 부드럽게 */
-            transition: left 0.2s ease-out, top 0.2s ease-out;
             z-index: 100;
+            transition: left 0.15s ease-out, top 0.15s ease-out;
+            /* 초기 위치를 브라우저가 자동으로 잡도록 함 */
         }
 
         #result-img {
             display: none;
-            max-width: 85%;
+            max-width: 90%;
             max-height: 70vh;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -68,7 +69,7 @@
 </head>
 <body>
 
-    <h1 id="question">나랑 결혼해 줄래?</h1>
+    <h1 id="question">나랑 같이 살래?</h1>
 
     <div id="ui-container" class="btn-container">
         <button id="yes-btn" onclick="showImage()">예</button>
@@ -78,41 +79,50 @@
     <img id="result-img" src="./static/result.jpg" alt="결과 사진">
 
     <script>
-        function runAway(event) {
-            // 모바일 터치 시 기본 동작(스크롤 등) 방지
-            if (event && event.type === 'touchstart') {
-                event.preventDefault();
+        function runAway(e) {
+            // 모바일 터치 시 화면 스크롤이나 클릭 이벤트를 완전히 무시
+            if (e) {
+                if (e.cancelable) e.preventDefault();
             }
 
-            const noBtn = document.getElementById('no-btn');
+            const btn = document.getElementById('no-btn');
             
-            // 처음 도망갈 때 'fixed'로 변경하여 브라우저 전체를 기준으로 잡습니다.
-            if (noBtn.style.position !== 'fixed') {
-                noBtn.style.position = 'fixed';
+            // 1. 처음 도망갈 때만 위치 모드를 고정(fixed)으로 변경
+            if (btn.style.position !== 'fixed') {
+                const rect = btn.getBoundingClientRect();
+                btn.style.left = rect.left + 'px';
+                btn.style.top = rect.top + 'px';
+                btn.style.position = 'fixed';
+                btn.style.margin = '0'; // 기존 flex 여백 제거
             }
 
-            // 브라우저의 실제 가시 영역 크기 계산
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
+            // 2. 현재 브라우저의 가시 영역(Viewport) 크기 측정
+            // 주소창 등을 제외한 실제 보이는 영역만 계산합니다.
+            const vWidth = window.innerWidth;
+            const vHeight = window.innerHeight;
 
-            // 버튼의 크기 확인
-            const btnWidth = noBtn.offsetWidth;
-            const btnHeight = noBtn.offsetHeight;
+            // 3. 버튼의 현재 크기 확인
+            const bWidth = btn.offsetWidth;
+            const bHeight = btn.offsetHeight;
 
-            // 안전 마진 (화면 끝에서 최소 20px 안쪽 유지)
-            const margin = 20;
+            // 4. 안전 영역 설정 (화면 끝에서 30px 안쪽으로만!)
+            const safeMargin = 30;
+            const maxX = vWidth - bWidth - safeMargin;
+            const maxY = vHeight - bHeight - safeMargin;
+            const minX = safeMargin;
+            const minY = safeMargin;
 
-            // 도망갈 수 있는 최대 범위 계산 (0 + margin ~ screen - btn - margin)
-            const maxX = screenWidth - btnWidth - margin;
-            const maxY = screenHeight - btnHeight - margin;
+            // 5. 랜덤 좌표 생성 (범위를 벗어나지 않도록 Math.max/min 사용)
+            let newX = Math.random() * (maxX - minX) + minX;
+            let newY = Math.random() * (maxY - minY) + minY;
 
-            // 새로운 좌표 랜덤 생성 (최소값 margin)
-            let newX = Math.random() * (maxX - margin) + margin;
-            let newY = Math.random() * (maxY - margin) + margin;
+            // 혹시라도 계산 오류로 음수가 나오지 않게 방어
+            newX = Math.max(minX, Math.min(newX, maxX));
+            newY = Math.max(minY, Math.min(newY, maxY));
 
-            // 좌표 적용
-            noBtn.style.left = newX + 'px';
-            noBtn.style.top = newY + 'px';
+            // 6. 좌표 즉시 적용
+            btn.style.left = newX + 'px';
+            btn.style.top = newY + 'px';
         }
 
         function showImage() {
@@ -121,6 +131,16 @@
             const img = document.getElementById('result-img');
             img.style.display = 'block';
         }
+
+        // 브라우저 크기가 변할 때(회전 등) 버튼이 갇히지 않게 초기화
+        window.addEventListener('resize', () => {
+            const btn = document.getElementById('no-btn');
+            if (btn.style.position === 'fixed') {
+                btn.style.position = 'relative';
+                btn.style.left = 'auto';
+                btn.style.top = 'auto';
+            }
+        });
     </script>
 </body>
 </html>
