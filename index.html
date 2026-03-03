@@ -5,34 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Propose for You</title>
     <style>
-        body {
+        /* 화면 전체를 고정하고 스크롤을 막습니다 */
+        html, body {
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100vh;
+            height: 100%;
+            overflow: hidden; 
             background-color: #f7cbd5;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-            overflow: hidden;
-            touch-action: manipulation; /* 모바일 더블탭 방지 */
+            position: fixed; /* 화면이 흔들리지 않게 고정 */
         }
+
         h1 {
             color: white;
             font-size: 2rem;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
             pointer-events: none;
+            z-index: 10;
         }
+
         .btn-container {
             position: relative;
             display: flex;
             gap: 30px;
-            z-index: 10;
+            z-index: 20;
         }
+
         button {
             padding: 15px 35px;
             font-size: 1.1rem;
@@ -42,51 +46,71 @@
             background-color: #fff9f9;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-weight: bold;
+            /* 터치 시 파란 박스 생기는 것 방지 */
+            -webkit-tap-highlight-color: transparent;
         }
+
         #no-btn {
-            position: relative;
-            transition: left 0.15s ease-out, top 0.15s ease-out;
+            /* 도망가는 움직임을 부드럽게 */
+            transition: left 0.2s ease-out, top 0.2s ease-out;
             z-index: 100;
         }
+
         #result-img {
             display: none;
-            max-width: 90%;
+            max-width: 85%;
             max-height: 70vh;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
 
-    <h1 id="question">나랑 같이 살래?</h1>
+    <h1 id="question">나랑 결혼해 줄래?</h1>
 
     <div id="ui-container" class="btn-container">
         <button id="yes-btn" onclick="showImage()">예</button>
-        <button id="no-btn" onmouseover="runAway()" ontouchstart="runAway(event)">아니오</button>
+        <button id="no-btn" onmouseover="runAway(event)" ontouchstart="runAway(event)">아니오</button>
     </div>
 
     <img id="result-img" src="./static/result.jpg" alt="결과 사진">
 
     <script>
         function runAway(event) {
-            // 모바일에서 터치 시 스크롤 등 기본 동작 방지
+            // 모바일 터치 시 기본 동작(스크롤 등) 방지
             if (event && event.type === 'touchstart') {
                 event.preventDefault();
             }
 
             const noBtn = document.getElementById('no-btn');
-            if (noBtn.style.position !== 'absolute') {
-                noBtn.style.position = 'absolute';
+            
+            // 처음 도망갈 때 'fixed'로 변경하여 브라우저 전체를 기준으로 잡습니다.
+            if (noBtn.style.position !== 'fixed') {
+                noBtn.style.position = 'fixed';
             }
 
-            const padding = 40;
-            const maxX = window.innerWidth - noBtn.offsetWidth - padding;
-            const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+            // 브라우저의 실제 가시 영역 크기 계산
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
 
-            const newX = Math.random() * (maxX - padding) + padding;
-            const newY = Math.random() * (maxY - padding) + padding;
+            // 버튼의 크기 확인
+            const btnWidth = noBtn.offsetWidth;
+            const btnHeight = noBtn.offsetHeight;
 
+            // 안전 마진 (화면 끝에서 최소 20px 안쪽 유지)
+            const margin = 20;
+
+            // 도망갈 수 있는 최대 범위 계산 (0 + margin ~ screen - btn - margin)
+            const maxX = screenWidth - btnWidth - margin;
+            const maxY = screenHeight - btnHeight - margin;
+
+            // 새로운 좌표 랜덤 생성 (최소값 margin)
+            let newX = Math.random() * (maxX - margin) + margin;
+            let newY = Math.random() * (maxY - margin) + margin;
+
+            // 좌표 적용
             noBtn.style.left = newX + 'px';
             noBtn.style.top = newY + 'px';
         }
